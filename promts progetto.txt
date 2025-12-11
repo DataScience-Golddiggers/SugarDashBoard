@@ -1,0 +1,14 @@
+1
+DOLCE	ID_Dolce (PK), Nome, Descrizione, Tempo_Preparazione, Difficoltà
+REGIONE	ID_Regione (PK), Nome, Capoluogo, Popolazione
+INGREDIENTE	ID_Ingrediente (PK), Nome, Unità_Misura, Costo_Medio
+VENDITA	ID_Vendita (PK), ID_Dolce (FK), Data_Vendita, Quantità_Venduta, Prezzo_Totale
+
+DOLCE VENDITA 1 : N (Uno a Molti)
+DOLCE REGIONE N : N (Molti a Molti)
+DOLCE INGREDIENTE N : N (Molti a Molti)
+
+
+
+2
+ voglio almeno la distribuzione temporale in base ai mesi in cui si mangiano più dolci
