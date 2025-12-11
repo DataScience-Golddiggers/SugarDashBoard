@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SugarDashboard | Analisi Dolci</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet & Chart.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <i class="fa-solid fa-cake-candles" style="color: var(--primary-color);"></i>
+                    SugarDash
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-view="dashboard">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-view="gallery">
+                        <i class="fa-solid fa-images"></i>
+                        <span>Galleria Dolci</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <span>Mappa Regioni</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>Ordini</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Clienti</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Inventario</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <h1 class="page-title">Panoramica Vendite</h1>
+                <div class="topbar-actions">
+                    <div class="filter-group">
+                        <i class="fa-regular fa-calendar" style="color: var(--text-secondary);"></i>
+                        <select id="timeFilter" class="form-select">
+                            <option value="today">Oggi</option>
+                            <option value="week">Ultimi 7 Giorni</option>
+                            <option value="month" selected>Ultimo Mese</option>
+                            <option value="year">Anno Corrente</option>
+                        </select>
+                    </div>
+                    <div class="user-profile">
+                        <i class="fa-solid fa-circle-user"
+                            style="font-size: 2rem; color: #d1d5db; cursor: pointer;"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view-section">
+                <div class="dashboard-content">
+
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <h3>Ricavi Totali</h3>
+                                <div class="kpi-value" id="kpi-revenue">€0</div>
+                                <div class="kpi-trend text-success">
+                                    <i class="fa-solid fa-arrow-trend-up"></i> +12%
+                                </div>
+                            </div>
+                            <div class="kpi-icon bg-blue-light">
+                                <i class="fa-solid fa-euro-sign"></i>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <h3>Ordini Completati</h3>
+                                <div class="kpi-value" id="kpi-orders">0</div>
+                                <div class="kpi-trend text-success">
+                                    <i class="fa-solid fa-arrow-trend-up"></i> +5.2%
+                                </div>
+                            </div>
+                            <div class="kpi-icon bg-purple-light">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <h3>Prezzo Medio</h3>
+                                <div class="kpi-value" id="kpi-avg">€0</div>
+                                <div class="kpi-trend text-danger">
+                                    <i class="fa-solid fa-arrow-trend-down"></i> -1.4%
+                                </div>
+                            </div>
+                            <div class="kpi-icon bg-green-light">
+                                <i class="fa-solid fa-tags"></i>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <h3>Soddisfazione</h3>
+                                <div class="kpi-value" id="kpi-satisfaction">0%</div>
+                                <div class="kpi-trend text-success">
+                                    <i class="fa-solid fa-star"></i> +0.8%
+                                </div>
+                            </div>
+                            <div class="kpi-icon bg-orange-light">
+                                <i class="fa-solid fa-heart"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+
+                        <!-- Map Section -->
+                        <div class="chart-card col-span-8">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-map-location-dot" style="color: var(--primary-color);"></i>
+                                    Distribuzione Regionale
+                                </div>
+                            </div>
+                            <div id="italyMap"></div>
+                        </div>
+
+                        <!-- Best Sellers -->
+                        <div class="chart-card col-span-4">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-trophy" style="color: var(--warning-color);"></i>
+                                    Top 5 Dolci
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="bestSellersChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Revenue Chart -->
+                        <div class="chart-card col-span-8">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-chart-line" style="color: var(--success-color);"></i>
+                                    Andamento Ricavi
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Ingredients -->
+                        <div class="chart-card col-span-4">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-egg" style="color: var(--accent-color);"></i>
+                                    Uso Ingredienti
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="ingredientsChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Difficulty -->
+                        <div class="chart-card col-span-6">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-layer-group" style="color: var(--secondary-color);"></i>
+                                    Difficoltà vs Vendite
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="difficultyChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Prices -->
+                        <div class="chart-card col-span-6">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-tag" style="color: var(--primary-color);"></i>
+                                    Listino Prezzi
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="priceChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery View (Hidden by default) -->
+            <div id="view-gallery" class="view-section hidden">
+                <div class="dashboard-content">
+                    <div class="gallery-grid" id="gallery-container">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
