@@ -1,14 +1,25 @@
 1
-DOLCE	ID_Dolce (PK), Nome, Descrizione, Tempo_Preparazione, Difficoltà
-REGIONE	ID_Regione (PK), Nome, Capoluogo, Popolazione
-INGREDIENTE	ID_Ingrediente (PK), Nome, Unità_Misura, Costo_Medio
-VENDITA	ID_Vendita (PK), ID_Dolce (FK), Data_Vendita, Quantità_Venduta, Prezzo_Totale
-
+Tabelle
+DOLCE ID_Dolce (PK), Nome, Descrizione, Tempo_Preparazione, Difficoltà
+REGIONE ID_Regione (PK), Nome, Capoluogo, Popolazione
+INGREDIENTE ID_Ingrediente (PK), Nome, Unità_Misura, Costo_Medio
+VENDITA ID_Vendita (PK), ID_Dolce (FK), Data_Vendita, Quantità_Venduta, Prezzo_Totale
+Relazioni
 DOLCE VENDITA 1 : N (Uno a Molti)
 DOLCE REGIONE N : N (Molti a Molti)
 DOLCE INGREDIENTE N : N (Molti a Molti)
-
-
-
+generami una dashboard con una griglia 3 colonne per 2 righe con le seguenti analisi:
+un analisi territoriale della provenienza dei dolci
+una analisi dei dolci più venduti
+un analisi sugli ingredienti più usati
+ed altre analisi che ritieni utili
 2
- voglio almeno la distribuzione temporale in base ai mesi in cui si mangiano più dolci
+l'analisi della provenienza dei dolci la voglio con una cartina con le regioni e i punti di grandezza proporzionale al numero di dolci provenienti da una regione
+3
+la cartina che hai generato non mi piace perchè molto imprecisa...puoi usare librerie o file da internet
+4
+l'analisi sui ricavi mensili la voglio per tutto per tutto l'anno e non solo per 6 mesi
+5
+nell'analisi sui dolci più venduti dividi per colore le colonne in base alla provenienza geografica
+Cannolo -> Sicilia ->Rosso
+Tiramisù-> Veneto -> Blu
