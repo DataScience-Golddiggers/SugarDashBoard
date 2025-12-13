@@ -1,1 +1,3 @@
 # SugarDashBoard
+
+![preview](Copertina.png)
