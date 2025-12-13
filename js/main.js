@@ -302,6 +302,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // --- 4. Gallery & Navigation Logic ---
 
+    // View titles mapping
+    const viewTitles = {
+        'dashboard': 'Panoramica Vendite',
+        'gallery': 'Galleria Dolci Regionali',
+        'map': 'Mappa Regioni',
+        'orders': 'Gestione Ordini',
+        'clients': 'Gestione Clienti',
+        'inventory': 'Gestione Inventario'
+    };
+
     // Simple SPA Router
     const navLinks = document.querySelectorAll('.nav-link[data-view]');
     const views = document.querySelectorAll('.view-section');
@@ -317,7 +327,8 @@ document.addEventListener('DOMContentLoaded', function () {
             this.classList.add('active');
 
             // Handle View State
-            const targetViewId = 'view-' + this.getAttribute('data-view');
+            const viewName = this.getAttribute('data-view');
+            const targetViewId = 'view-' + viewName;
 
             views.forEach(view => {
                 if (view.id === targetViewId) {
@@ -328,13 +339,32 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Update Header
-            if (this.getAttribute('data-view') === 'gallery') {
-                pageTitle.textContent = 'Galleria Dolci Regionali';
-                dashboardControls.classList.add('hidden');
-                renderGallery(); // Render on demand
-            } else {
-                pageTitle.textContent = 'Panoramica Vendite';
+            pageTitle.textContent = viewTitles[viewName] || 'SugarDashboard';
+            
+            // Show/Hide dashboard controls
+            if (viewName === 'dashboard') {
                 dashboardControls.classList.remove('hidden');
+            } else {
+                dashboardControls.classList.add('hidden');
+            }
+
+            // Render views on demand
+            switch(viewName) {
+                case 'gallery':
+                    renderGallery();
+                    break;
+                case 'map':
+                    renderMapView();
+                    break;
+                case 'orders':
+                    renderOrders();
+                    break;
+                case 'clients':
+                    renderClients();
+                    break;
+                case 'inventory':
+                    renderInventory();
+                    break;
             }
         });
     });
@@ -373,5 +403,214 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
             container.appendChild(card);
         });
+    }
+
+    // --- 5. Map View ---
+    let fullMap = null;
+
+    function renderMapView() {
+        const mapContainer = document.getElementById('fullRegionMap');
+        const statsContainer = document.getElementById('region-stats-container');
+        
+        // Initialize map only once
+        if (!fullMap) {
+            fullMap = L.map('fullRegionMap', {
+                zoomControl: true,
+                scrollWheelZoom: true
+            }).setView([42.0, 12.5], 6);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(fullMap);
+
+            // Load GeoJSON for full map
+            fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    L.geoJson(data, {
+                        style: function(feature) {
+                            const regionName = feature.properties.reg_name || feature.properties.name || feature.properties.NOME_REG;
+                            const count = DataService.getRegionData(regionName).count;
+                            return {
+                                fillColor: getColorForMap(count),
+                                weight: 2,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '3',
+                                fillOpacity: 0.7
+                            };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            const regionName = feature.properties.reg_name || feature.properties.name || feature.properties.NOME_REG;
+                            const data = DataService.getRegionData(regionName);
+                            layer.bindPopup(`
+                                <div style="text-align: center; padding: 10px;">
+                                    <strong style="font-size: 1.1em;">${regionName}</strong><br>
+                                    <hr style="margin: 8px 0;">
+                                    <div>📊 Vendite: <strong>${data.count}%</strong></div>
+                                    <div>🍰 Specialità: <strong>${data.bestSeller}</strong></div>
+                                </div>
+                            `);
+                            layer.on({
+                                mouseover: function(e) {
+                                    e.target.setStyle({ weight: 3, fillOpacity: 0.9 });
+                                },
+                                mouseout: function(e) {
+                                    e.target.setStyle({ weight: 2, fillOpacity: 0.7 });
+                                }
+                            });
+                        }
+                    }).addTo(fullMap);
+                })
+                .catch(console.error);
+        } else {
+            // Invalidate size when switching back to map view
+            setTimeout(() => fullMap.invalidateSize(), 100);
+        }
+
+        // Render region stats cards
+        if (statsContainer.children.length === 0) {
+            const regions = DataService.getAllRegions();
+            const sortedRegions = Object.entries(regions).sort((a, b) => b[1].count - a[1].count);
+
+            sortedRegions.forEach(([name, data]) => {
+                const card = document.createElement('div');
+                card.className = 'region-stat-card';
+                card.innerHTML = `
+                    <div class="region-stat-header">
+                        <span class="region-name">${name}</span>
+                        <span class="region-percentage">${data.count}%</span>
+                    </div>
+                    <div class="region-stat-bar">
+                        <div class="region-stat-fill" style="width: ${data.count * 4}%; background: ${getColorForMap(data.count)};"></div>
+                    </div>
+                    <div class="region-stat-detail">
+                        <i class="fa-solid fa-cake-candles"></i> ${data.bestSeller}
+                    </div>
+                `;
+                statsContainer.appendChild(card);
+            });
+        }
+    }
+
+    function getColorForMap(d) {
+        return d > 20 ? '#4338ca' :
+               d > 15 ? '#6366f1' :
+               d > 12 ? '#818cf8' :
+               d > 10 ? '#a5b4fc' :
+               d > 5 ? '#c7d2fe' :
+               '#e0e7ff';
+    }
+
+    // --- 6. Orders View ---
+    function renderOrders() {
+        const tbody = document.getElementById('orders-tbody');
+        if (tbody.children.length > 0) return; // Already rendered
+
+        const orders = DataService.getOrders();
+
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+            const statusClass = order.stato === 'completato' ? 'status-success' : 
+                               order.stato === 'in-spedizione' ? 'status-warning' : 'status-pending';
+            const statusText = order.stato === 'completato' ? 'Completato' :
+                              order.stato === 'in-spedizione' ? 'In Spedizione' : 'In Attesa';
+
+            row.innerHTML = `
+                <td><strong>${order.id}</strong></td>
+                <td>${order.cliente}</td>
+                <td>${order.prodotti}</td>
+                <td>€${order.totale.toFixed(2)}</td>
+                <td>${formatDate(order.data)}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="action-buttons">
+                    <button class="btn-icon btn-view" title="Visualizza"><i class="fa-solid fa-eye"></i></button>
+                    <button class="btn-icon btn-edit" title="Modifica"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-icon btn-delete" title="Elimina"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // --- 7. Clients View ---
+    function renderClients() {
+        const tbody = document.getElementById('clients-tbody');
+        if (tbody.children.length > 0) return; // Already rendered
+
+        const clients = DataService.getClients();
+
+        clients.forEach(client => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${client.id}</strong></td>
+                <td>${client.nome}</td>
+                <td>${client.email}</td>
+                <td>${client.telefono}</td>
+                <td><span class="region-badge">${client.regione}</span></td>
+                <td>${client.ordini}</td>
+                <td>€${client.totaleSpeso.toFixed(2)}</td>
+                <td class="action-buttons">
+                    <button class="btn-icon btn-view" title="Visualizza"><i class="fa-solid fa-eye"></i></button>
+                    <button class="btn-icon btn-edit" title="Modifica"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-icon btn-delete" title="Elimina"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // --- 8. Inventory View ---
+    function renderInventory() {
+        const container = document.getElementById('inventory-container');
+        if (container.children.length > 0) return; // Already rendered
+
+        const inventory = DataService.getInventory();
+
+        inventory.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'inventory-card';
+            
+            const statusClass = item.stato === 'disponibile' ? 'stock-available' :
+                               item.stato === 'scorta-bassa' ? 'stock-low' : 'stock-out';
+            const statusIcon = item.stato === 'disponibile' ? 'fa-check-circle' :
+                              item.stato === 'scorta-bassa' ? 'fa-exclamation-triangle' : 'fa-times-circle';
+            const statusText = item.stato === 'disponibile' ? 'Disponibile' :
+                              item.stato === 'scorta-bassa' ? 'Scorta Bassa' : 'Esaurito';
+
+            card.innerHTML = `
+                <div class="inventory-header">
+                    <span class="inventory-category">${item.categoria}</span>
+                    <span class="inventory-id">${item.id}</span>
+                </div>
+                <h3 class="inventory-name">${item.nome}</h3>
+                <div class="inventory-details">
+                    <div class="inventory-price">€${item.prezzo.toFixed(2)}</div>
+                    <div class="inventory-stock">
+                        <i class="fa-solid ${statusIcon} ${statusClass}"></i>
+                        <span>${item.stock} unità</span>
+                    </div>
+                </div>
+                <div class="stock-bar">
+                    <div class="stock-fill ${statusClass}" style="width: ${Math.min((item.stock / (item.minStock * 3)) * 100, 100)}%;"></div>
+                </div>
+                <div class="inventory-status ${statusClass}">
+                    <i class="fa-solid ${statusIcon}"></i> ${statusText}
+                </div>
+                <div class="inventory-actions">
+                    <button class="btn-sm btn-primary"><i class="fa-solid fa-plus"></i> Rifornisci</button>
+                    <button class="btn-sm btn-secondary"><i class="fa-solid fa-pen"></i> Modifica</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- Utility Functions ---
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 });

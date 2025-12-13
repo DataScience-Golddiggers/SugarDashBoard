@@ -47,25 +47,25 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="#" class="nav-link" data-view="map">
                         <i class="fa-solid fa-map-location-dot"></i>
                         <span>Mappa Regioni</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="#" class="nav-link" data-view="orders">
                         <i class="fa-solid fa-receipt"></i>
                         <span>Ordini</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="#" class="nav-link" data-view="clients">
                         <i class="fa-solid fa-users"></i>
                         <span>Clienti</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="#" class="nav-link" data-view="inventory">
                         <i class="fa-solid fa-boxes-stacked"></i>
                         <span>Inventario</span>
                     </a>
@@ -243,6 +243,186 @@
                 <div class="dashboard-content">
                     <div class="gallery-grid" id="gallery-container">
                         <!-- Items injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map View -->
+            <div id="view-map" class="view-section hidden">
+                <div class="dashboard-content">
+                    <div class="map-container-full">
+                        <div class="chart-card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-map-location-dot" style="color: var(--primary-color);"></i>
+                                    Mappa Interattiva delle Regioni
+                                </div>
+                            </div>
+                            <div id="fullRegionMap" style="height: 500px; border-radius: 0.75rem;"></div>
+                        </div>
+                    </div>
+                    <div class="region-stats-grid" id="region-stats-container">
+                        <!-- Region cards injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders View -->
+            <div id="view-orders" class="view-section hidden">
+                <div class="dashboard-content">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-receipt" style="color: var(--primary-color);"></i> Gestione Ordini</h2>
+                        <button class="btn-primary" id="newOrderBtn"><i class="fa-solid fa-plus"></i> Nuovo Ordine</button>
+                    </div>
+                    <div class="orders-summary">
+                        <div class="summary-card">
+                            <div class="summary-icon bg-blue-light"><i class="fa-solid fa-clock"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="pending-orders">12</span>
+                                <span class="summary-label">In Attesa</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-orange-light"><i class="fa-solid fa-truck"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="shipping-orders">8</span>
+                                <span class="summary-label">In Spedizione</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-green-light"><i class="fa-solid fa-check-circle"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="completed-orders">156</span>
+                                <span class="summary-label">Completati</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-purple-light"><i class="fa-solid fa-euro-sign"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="total-revenue-orders">€12,450</span>
+                                <span class="summary-label">Totale Ricavi</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Ordine</th>
+                                    <th>Cliente</th>
+                                    <th>Prodotti</th>
+                                    <th>Totale</th>
+                                    <th>Data</th>
+                                    <th>Stato</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-tbody">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients View -->
+            <div id="view-clients" class="view-section hidden">
+                <div class="dashboard-content">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-users" style="color: var(--secondary-color);"></i> Gestione Clienti</h2>
+                        <button class="btn-primary" id="newClientBtn"><i class="fa-solid fa-user-plus"></i> Nuovo Cliente</button>
+                    </div>
+                    <div class="clients-summary">
+                        <div class="summary-card">
+                            <div class="summary-icon bg-purple-light"><i class="fa-solid fa-users"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="total-clients">248</span>
+                                <span class="summary-label">Totale Clienti</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-green-light"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="active-clients">186</span>
+                                <span class="summary-label">Clienti Attivi</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-blue-light"><i class="fa-solid fa-star"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="vip-clients">42</span>
+                                <span class="summary-label">Clienti VIP</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-orange-light"><i class="fa-solid fa-chart-line"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="avg-spend">€85</span>
+                                <span class="summary-label">Spesa Media</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefono</th>
+                                    <th>Regione</th>
+                                    <th>Ordini</th>
+                                    <th>Totale Speso</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-tbody">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory View -->
+            <div id="view-inventory" class="view-section hidden">
+                <div class="dashboard-content">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-boxes-stacked" style="color: var(--warning-color);"></i> Gestione Inventario</h2>
+                        <button class="btn-primary" id="newProductBtn"><i class="fa-solid fa-plus"></i> Aggiungi Prodotto</button>
+                    </div>
+                    <div class="inventory-summary">
+                        <div class="summary-card">
+                            <div class="summary-icon bg-blue-light"><i class="fa-solid fa-box"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="total-products">64</span>
+                                <span class="summary-label">Prodotti Totali</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-green-light"><i class="fa-solid fa-warehouse"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="in-stock">52</span>
+                                <span class="summary-label">In Stock</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-orange-light"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="low-stock">8</span>
+                                <span class="summary-label">Scorte Basse</span>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon bg-purple-light"><i class="fa-solid fa-xmark-circle"></i></div>
+                            <div class="summary-info">
+                                <span class="summary-value" id="out-of-stock">4</span>
+                                <span class="summary-label">Esauriti</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inventory-grid" id="inventory-container">
+                        <!-- Inventory cards injected by JS -->
                     </div>
                 </div>
             </div>
