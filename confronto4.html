@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Pasticceria Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        /* --- SEZIONE KPI (Indicatori Numerici) --- */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .kpi-card.warning { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); }
+        .kpi-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        
+        .kpi-value { font-size: 2.5rem; font-weight: 700; margin: 10px 0; }
+        .kpi-label { font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+
+        /* --- GRIGLIA GRAFICI --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            /* Altezza automatica, ma minima per riga */
+            grid-auto-rows: 400px; 
+            gap: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        #map { width: 100%; height: 100%; border-radius: 4px; z-index: 1; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .grid-container { grid-template-columns: repeat(2, 1fr); }
+            .kpi-container { grid-template-columns: repeat(3, 1fr); } /* KPI restano 3 su tablet */
+        }
+        @media (max-width: 768px) {
+            .grid-container { grid-template-columns: 1fr; grid-auto-rows: 350px; }
+            .kpi-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📊 Dashboard Pasticceria Executive</h1>
+
+    <!-- 0. KPI CARDS (Nuova Sezione) -->
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <div class="kpi-label">Fatturato Annuo</div>
+            <div class="kpi-value">€ 185.000</div>
+            <small>+12% rispetto all'anno scorso</small>
+        </div>
+        <div class="kpi-card warning">
+            <div class="kpi-label">Ordini Totali</div>
+            <div class="kpi-value">5.230</div>
+            <small>Media 14 ordini al giorno</small>
+        </div>
+        <div class="kpi-card success">
+            <div class="kpi-label">Scontrino Medio</div>
+            <div class="kpi-value">€ 35,40</div>
+            <small>Target: € 32,00</small>
+        </div>
+    </div>
+
+    <!-- GRIGLIA GRAFICI -->
+    <div class="grid-container">
+
+        <!-- 1. MAPPA -->
+        <div class="card">
+            <h3>📍 Copertura Regionale Dolci</h3>
+            <div class="chart-container">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- 2. BEST SELLERS -->
+        <div class="card">
+            <h3>🏆 Top 5 Dolci più Venduti</h3>
+            <div class="chart-container">
+                <canvas id="chartBestSellers"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. INGREDIENTI (Titolo Corretto) -->
+        <div class="card">
+            <h3>🥣 Top 5 Ingredienti più Utilizzati</h3>
+            <div class="chart-container">
+                <canvas id="chartIngredients"></canvas>
+            </div>
+        </div>
+
+        <!-- 4. FATTURATO PIE -->
+        <div class="card">
+            <h3>💰 Share Fatturato per Prodotto</h3>
+            <div class="chart-container">
+                <canvas id="chartRevenue"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. TREND LINEA -->
+        <div class="card">
+            <h3>📈 Trend Ricavi Mensili</h3>
+            <div class="chart-container">
+                <canvas id="chartTrend"></canvas>
+            </div>
+        </div>
+
+        <!-- 6. NUOVO: ANALISI MARGINALITÀ (Scatter) -->
+        <div class="card">
+            <h3>💎 Analisi Marginalità (Costo vs Prezzo)</h3>
+            <div class="chart-container">
+                <canvas id="chartMargin"></canvas>
+            </div>
+            <small>Punti in alto a sx = Alto profitto.</small>
+        </div>
+
+        <!-- 7. NUOVO: ANALISI GIORNALIERA (Radar) -->
+        <div class="card">
+            <h3>📅 Vendite per Giorno della Settimana</h3>
+            <div class="chart-container">
+                <canvas id="chartWeek"></canvas>
+            </div>
+        </div>
+
+        <!-- 8. NUOVO: COSTI INGREDIENTI (Bar Horizontal) -->
+        <div class="card">
+            <h3>💸 Costo Medio Ingredienti Chiave (€/kg)</h3>
+            <div class="chart-container">
+                <canvas id="chartCostIng"></canvas>
+            </div>
+        </div>
+
+        <!-- 9. COMPLESSITÀ (Spostato in fondo) -->
+        <div class="card">
+            <h3>⏱️ Tempo Preparazione Medio</h3>
+            <div class="chart-container">
+                <canvas id="chartComplexity"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // === DATI CONDIVISI ===
+        const colors = {
+            primary: 'rgba(54, 162, 235, 0.7)',
+            secondary: 'rgba(255, 99, 132, 0.7)',
+            yellow: 'rgba(255, 206, 86, 0.7)',
+            green: 'rgba(75, 192, 192, 0.7)',
+            purple: 'rgba(153, 102, 255, 0.7)',
+            orange: 'rgba(255, 159, 64, 0.7)',
+            grey: 'rgba(201, 203, 207, 0.7)'
+        };
+
+        // 1. MAPPA (Leaflet)
+        const regionData = [
+            { name: "Sicilia", lat: 37.5, lng: 14.0, count: 18 },
+            { name: "Campania", lat: 41.0, lng: 14.8, count: 12 },
+            { name: "Lombardia", lat: 45.4, lng: 9.9, count: 7 },
+            { name: "Veneto", lat: 45.6, lng: 11.8, count: 5 },
+            { name: "Puglia", lat: 41.0, lng: 16.5, count: 9 },
+            { name: "Lazio", lat: 41.9, lng: 12.6, count: 5 }
+        ];
+        const map = L.map('map', { scrollWheelZoom: false }).setView([41.9, 12.6], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+        regionData.forEach(reg => {
+            L.circleMarker([reg.lat, reg.lng], {
+                radius: reg.count * 1.5,
+                fillColor: colors.primary, color: "#2c3e50", weight: 1, opacity: 1, fillOpacity: 0.6
+            }).bindPopup(`<b>${reg.name}</b><br>Dolci: ${reg.count}`).addTo(map);
+        });
+
+        // 2. BEST SELLERS
+        new Chart(document.getElementById('chartBestSellers'), {
+            type: 'bar',
+            data: {
+                labels: ['Cannolo', 'Tiramisù', 'Babà', 'Panettone', 'Sfogliatella'],
+                datasets: [{ label: 'Qta', data: [1500, 1200, 950, 800, 750], backgroundColor: [colors.secondary, colors.yellow, colors.primary, colors.green, colors.orange] }]
+            },
+            options: { maintainAspectRatio: false, responsive: true }
+        });
+
+        // 3. INGREDIENTI
+        new Chart(document.getElementById('chartIngredients'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Zucchero', 'Farina', 'Uova', 'Cioccolato', 'Ricotta'],
+                datasets: [{ data: [30, 25, 20, 15, 10], backgroundColor: Object.values(colors) }]
+            },
+            options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+
+        // 4. FATTURATO
+        new Chart(document.getElementById('chartRevenue'), {
+            type: 'pie',
+            data: {
+                labels: ['Cannolo', 'Tiramisù', 'Babà', 'Altri'],
+                datasets: [{ data: [4500, 6000, 2800, 5000], backgroundColor: [colors.secondary, colors.purple, colors.yellow, colors.grey] }]
+            },
+            options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+
+        // 5. TREND
+        new Chart(document.getElementById('chartTrend'), {
+            type: 'line',
+            data: {
+                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Ricavi (€)',
+                    data: [12000, 13500, 14500, 19000, 16000, 16500, 14000, 11000, 13500, 15000, 17500, 26000],
+                    borderColor: colors.primary, backgroundColor: 'rgba(54, 162, 235, 0.1)', fill: true, tension: 0.4
+                }]
+            },
+            options: { maintainAspectRatio: false, responsive: true }
+        });
+
+        // --- NUOVI GRAFICI ---
+
+        // 6. MARGINALITÀ (Scatter Plot) - Analisi Costo vs Prezzo
+        new Chart(document.getElementById('chartMargin'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Dolci',
+                    data: [
+                        { x: 2.5, y: 15 }, // x: Costo, y: Prezzo Vendita
+                        { x: 3.0, y: 18 },
+                        { x: 1.5, y: 5 },
+                        { x: 5.0, y: 35 },
+                        { x: 1.2, y: 3.5 },
+                        { x: 4.0, y: 22 }
+                    ],
+                    backgroundColor: colors.secondary
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Costo Stimato (€)' }, beginAtZero: true },
+                    y: { title: { display: true, text: 'Prezzo Vendita (€)' }, beginAtZero: true }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Costo: €${context.raw.x} - Prezzo: €${context.raw.y}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 7. RADAR CHART (Analisi Settimanale)
+        new Chart(document.getElementById('chartWeek'), {
+            type: 'radar',
+            data: {
+                labels: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
+                datasets: [{
+                    label: 'Vendite Settimanali',
+                    data: [5, 8, 7, 10, 25, 30, 15], // % o valori assoluti
+                    fill: true,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: colors.green,
+                    pointBackgroundColor: colors.green,
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                elements: { line: { borderWidth: 3 } }
+            }
+        });
+
+        // 8. COSTO INGREDIENTI (Bar Chart Horizontal)
+        new Chart(document.getElementById('chartCostIng'), {
+            type: 'bar',
+            data: {
+                labels: ['Vaniglia', 'Pistacchio', 'Cioccolato Fond.', 'Burro', 'Farina'],
+                datasets: [{
+                    label: 'Costo (€/Kg)',
+                    data: [150, 45, 18, 12, 1.5],
+                    backgroundColor: [colors.secondary, colors.green, colors.purple, colors.yellow, colors.grey],
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Barre orizzontali
+                maintainAspectRatio: false,
+            }
+        });
+
+        // 9. COMPLESSITÀ (Bar)
+        new Chart(document.getElementById('chartComplexity'), {
+            type: 'bar',
+            data: {
+                labels: ['Bassa', 'Media', 'Alta'],
+                datasets: [{ label: 'Minuti Prep.', data: [25, 60, 180], backgroundColor: [colors.green, colors.yellow, colors.secondary] }]
+            },
+            options: { maintainAspectRatio: false, responsive: true }
+        });
+
+    </script>
+</body>
+</html>

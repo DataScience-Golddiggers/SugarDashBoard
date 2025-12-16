@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Pasticceria Annuale</title>
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js (Grafici) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet.js (Mappe) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        /* Griglia CSS: 3 Colonne, 2 Righe */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 450px);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            z-index: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+            }
+            .grid-container > div { min-height: 400px; }
+        }
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📊 Dashboard Analytics Pasticceria (Report Annuale)</h1>
+
+    <div class="grid-container">
+
+        <!-- 1. MAPPA -->
+        <div class="card">
+            <h3>📍 Densità Dolci per Regione</h3>
+            <div class="chart-container">
+                <div id="map"></div>
+            </div>
+            <small>Dimensione cerchio = Numero di dolci a catalogo.</small>
+        </div>
+
+        <!-- 2. BEST SELLERS -->
+        <div class="card">
+            <h3>🏆 Top 5 Dolci più Venduti</h3>
+            <div class="chart-container">
+                <canvas id="chartBestSellers"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. INGREDIENTI -->
+        <div class="card">
+            <h3>uudc5 Ingredienti più Utilizzati</h3>
+            <div class="chart-container">
+                <canvas id="chartIngredients"></canvas>
+            </div>
+        </div>
+
+        <!-- 4. FATTURATO -->
+        <div class="card">
+            <h3>💰 Fatturato per Dolce (Revenue)</h3>
+            <div class="chart-container">
+                <canvas id="chartRevenue"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. COMPLESSITÀ -->
+        <div class="card">
+            <h3>⏱️ Tempo Preparazione vs Difficoltà</h3>
+            <div class="chart-container">
+                <canvas id="chartComplexity"></canvas>
+            </div>
+        </div>
+
+        <!-- 6. TREND VENDITE (AGGIORNATO 12 MESI) -->
+        <div class="card">
+            <h3>📈 Trend Ricavi (Anno Solare)</h3>
+            <div class="chart-container">
+                <canvas id="chartTrend"></canvas>
+            </div>
+            <small>Andamento mensile con picchi stagionali.</small>
+        </div>
+
+    </div>
+
+    <script>
+        // === DATI E CONFIGURAZIONI ===
+        
+        const colors = {
+            primary: 'rgba(54, 162, 235, 0.7)',
+            secondary: 'rgba(255, 99, 132, 0.7)',
+            yellow: 'rgba(255, 206, 86, 0.7)',
+            green: 'rgba(75, 192, 192, 0.7)',
+            purple: 'rgba(153, 102, 255, 0.7)',
+            orange: 'rgba(255, 159, 64, 0.7)'
+        };
+
+        // --- 1. MAPPA (Leaflet) ---
+        const regionData = [
+            { name: "Sicilia", lat: 37.5, lng: 14.0, count: 18 },
+            { name: "Campania", lat: 41.0, lng: 14.8, count: 12 },
+            { name: "Lombardia", lat: 45.4, lng: 9.9, count: 7 },
+            { name: "Veneto", lat: 45.6, lng: 11.8, count: 5 },
+            { name: "Toscana", lat: 43.4, lng: 11.0, count: 6 },
+            { name: "Piemonte", lat: 45.0, lng: 7.6, count: 4 },
+            { name: "Puglia", lat: 41.0, lng: 16.5, count: 9 },
+            { name: "Lazio", lat: 41.9, lng: 12.6, count: 5 }
+        ];
+
+        const map = L.map('map', { scrollWheelZoom: false }).setView([41.9, 12.6], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OSM contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        regionData.forEach(reg => {
+            L.circleMarker([reg.lat, reg.lng], {
+                radius: reg.count * 1.5,
+                fillColor: "rgba(54, 162, 235, 0.8)",
+                color: "#2c3e50",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.6
+            }).bindPopup(`<b>${reg.name}</b><br>Dolci: ${reg.count}`).addTo(map);
+        });
+
+        // --- 2. GRAFICO BEST SELLERS ---
+        new Chart(document.getElementById('chartBestSellers'), {
+            type: 'bar',
+            data: {
+                labels: ['Cannolo', 'Tiramisù', 'Babà', 'Panettone', 'Sfogliatella'],
+                datasets: [{
+                    label: 'Unità Vendute',
+                    data: [1500, 1200, 950, 800, 750],
+                    backgroundColor: [colors.secondary, colors.yellow, colors.primary, colors.green, colors.orange]
+                }]
+            },
+            options: { maintainAspectRatio: false, responsive: true }
+        });
+
+        // --- 3. GRAFICO INGREDIENTI ---
+        new Chart(document.getElementById('chartIngredients'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Zucchero', 'Farina 00', 'Uova', 'Cioccolato', 'Ricotta'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: Object.values(colors)
+                }]
+            },
+            options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+
+        // --- 4. GRAFICO FATTURATO ---
+        new Chart(document.getElementById('chartRevenue'), {
+            type: 'pie',
+            data: {
+                labels: ['Cannolo', 'Tiramisù', 'Babà', 'Altri'],
+                datasets: [{
+                    data: [4500, 6000, 2800, 5000],
+                    backgroundColor: [colors.secondary, colors.purple, colors.yellow, '#ccc']
+                }]
+            },
+            options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+
+        // --- 5. GRAFICO COMPLESSITÀ ---
+        new Chart(document.getElementById('chartComplexity'), {
+            type: 'bar',
+            data: {
+                labels: ['Bassa', 'Media', 'Alta'],
+                datasets: [{
+                    label: 'Minuti Prep.',
+                    data: [25, 60, 180],
+                    backgroundColor: [colors.green, colors.yellow, colors.secondary]
+                }]
+            },
+            options: { maintainAspectRatio: false, responsive: true }
+        });
+
+        // --- 6. GRAFICO TREND (MODIFICATO: 12 MESI) ---
+        new Chart(document.getElementById('chartTrend'), {
+            type: 'line',
+            data: {
+                // Etichette per tutti i 12 mesi
+                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Ricavi Totali (€)',
+                    // Dati simulati per l'intero anno
+                    data: [
+                        12000, 13500, 14500, 19000, // Gen-Apr (Picco Pasqua)
+                        16000, 16500, 14000, 11000, // Mag-Ago (Calo Estivo)
+                        13500, 15000, 17500, 26000  // Set-Dic (Picco Natale)
+                    ],
+                    borderColor: colors.primary,
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.4, // Linea curva
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                responsive: true, 
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        title: { display: true, text: 'Euro (€)' }
+                    } 
+                } 
+            }
+        });
+
+    </script>
+</body>
+</html>

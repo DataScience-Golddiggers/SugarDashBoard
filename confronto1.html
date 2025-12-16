@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analisi Pasticceria</title>
+    <!-- Importazione Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Importazione Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        /* Griglia CSS: 3 Colonne, 2 Righe */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 400px); /* Altezza fissa per uniformità */
+            gap: 20px;
+        }
+
+        /* Stile delle Card */
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Responsive: su schermi piccoli diventa 1 colonna */
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+            }
+        }
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+            .grid-container > div {
+                min-height: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📊 Dashboard Analytics Pasticceria</h1>
+
+    <div class="grid-container">
+
+        <!-- 1. ANALISI TERRITORIALE (Richiesta) -->
+        <!-- Relazione DOLCE - REGIONE (N:N) -->
+        <div class="card">
+            <h3>📍 Provenienza Dolci (Dolci per Regione)</h3>
+            <div class="chart-container">
+                <canvas id="chartRegion"></canvas>
+            </div>
+            <small>Conteggio dolci tipici associati a ciascuna regione.</small>
+        </div>
+
+        <!-- 2. DOLCI PIÙ VENDUTI (Richiesta) -->
+        <!-- Relazione DOLCE - VENDITA (1:N) -->
+        <div class="card">
+            <h3>🏆 Top 5 Dolci più Venduti (Quantità)</h3>
+            <div class="chart-container">
+                <canvas id="chartBestSellers"></canvas>
+            </div>
+            <small>Basato sulla somma di Quantità_Venduta.</small>
+        </div>
+
+        <!-- 3. INGREDIENTI PIÙ USATI (Richiesta) -->
+        <!-- Relazione DOLCE - INGREDIENTE (N:N) -->
+        <div class="card">
+            <h3>uudc5 Ingredienti più Utilizzati</h3>
+            <div class="chart-container">
+                <canvas id="chartIngredients"></canvas>
+            </div>
+            <small>Frequenza di apparizione nelle ricette.</small>
+        </div>
+
+        <!-- 4. ANALISI AGGIUNTIVA: FATTURATO vs QUANTITÀ -->
+        <!-- Tabella VENDITA -->
+        <div class="card">
+            <h3>💰 Fatturato per Dolce (Revenue)</h3>
+            <div class="chart-container">
+                <canvas id="chartRevenue"></canvas>
+            </div>
+            <small>Confronto tra quantità venduta e incasso totale.</small>
+        </div>
+
+        <!-- 5. ANALISI AGGIUNTIVA: COMPLESSITÀ -->
+        <!-- Tabella DOLCE (Difficoltà e Tempo) -->
+        <div class="card">
+            <h3>⏱️ Tempo Preparazione vs Difficoltà</h3>
+            <div class="chart-container">
+                <canvas id="chartComplexity"></canvas>
+            </div>
+            <small>Tempo medio (minuti) raggruppato per difficoltà.</small>
+        </div>
+
+        <!-- 6. ANALISI AGGIUNTIVA: TREND VENDITE -->
+        <!-- Tabella VENDITA (Data_Vendita) -->
+        <div class="card">
+            <h3>📈 Trend Vendite (Ultimi 6 Mesi)</h3>
+            <div class="chart-container">
+                <canvas id="chartTrend"></canvas>
+            </div>
+            <small>Andamento del fatturato mensile.</small>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURAZIONE GRAFICI ---
+        
+        // Colori Palette Pasticceria
+        const colors = {
+            primary: 'rgba(54, 162, 235, 0.7)',
+            secondary: 'rgba(255, 99, 132, 0.7)',
+            yellow: 'rgba(255, 206, 86, 0.7)',
+            green: 'rgba(75, 192, 192, 0.7)',
+            purple: 'rgba(153, 102, 255, 0.7)',
+            orange: 'rgba(255, 159, 64, 0.7)'
+        };
+
+        // 1. GRAFICO REGIONI (Bar Chart Orizzontale)
+        const ctxRegion = document.getElementById('chartRegion').getContext('2d');
+        new Chart(ctxRegion, {
+            type: 'bar',
+            data: {
+                labels: ['Sicilia', 'Campania', 'Veneto', 'Lombardia', 'Toscana'],
+                datasets: [{
+                    label: 'Numero Dolci Tipici',
+                    data: [12, 8, 5, 6, 4],
+                    backgroundColor: colors.primary,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Rende le barre orizzontali
+                maintainAspectRatio: false,
+                responsive: true
+            }
+        });
+
+        // 2. GRAFICO BEST SELLERS (Bar Chart Verticale)
+        const ctxBest = document.getElementById('chartBestSellers').getContext('2d');
+        new Chart(ctxBest, {
+            type: 'bar',
+            data: {
+                labels: ['Cannolo', 'Tiramisù', 'Babà', 'Panettone', 'Sfogliatella'],
+                datasets: [{
+                    label: 'Unità Vendute',
+                    data: [1500, 1200, 950, 800, 750],
+                    backgroundColor: [colors.secondary, colors.yellow, colors.primary, colors.green, colors.orange],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true
+            }
+        });
+
+        // 3. GRAFICO INGREDIENTI (Doughnut Chart)
+        const ctxIng = document.getElementById('chartIngredients').getContext('2d');
+        new Chart(ctxIng, {
+            type: 'doughnut',
+            data: {
+                labels: ['Zucchero', 'Farina 00', 'Uova', 'Cioccolato', 'Ricotta'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10], // % di utilizzo nelle ricette
+                    backgroundColor: Object.values(colors),
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+
+        // 4. GRAFICO FATTURATO (Pie Chart)
+        const ctxRev = document.getElementById('chartRevenue').getContext('2d');
+        new Chart(ctxRev, {
+            type: 'pie',
+            data: {
+                labels: ['Cannolo', 'Tiramisù', 'Babà', 'Altri'],
+                datasets: [{
+                    label: 'Fatturato (€)',
+                    data: [4500, 6000, 2800, 5000],
+                    backgroundColor: [colors.secondary, colors.purple, colors.yellow, '#ccc'],
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+
+        // 5. GRAFICO COMPLESSITÀ (Radar o Bar)
+        const ctxComp = document.getElementById('chartComplexity').getContext('2d');
+        new Chart(ctxComp, {
+            type: 'bar',
+            data: {
+                labels: ['Bassa', 'Media', 'Alta'], // Livelli Difficoltà
+                datasets: [{
+                    label: 'Tempo Medio Prep. (min)',
+                    data: [25, 60, 180],
+                    backgroundColor: [colors.green, colors.yellow, colors.secondary],
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true
+            }
+        });
+
+        // 6. GRAFICO TREND (Line Chart)
+        const ctxTrend = document.getElementById('chartTrend').getContext('2d');
+        new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'],
+                datasets: [{
+                    label: 'Fatturato Totale (€)',
+                    data: [12000, 11500, 14000, 16000, 15500, 18000],
+                    borderColor: colors.primary,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: true,
+                    tension: 0.4 // Curva morbida
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
